@@ -14,6 +14,13 @@ const controller = new Leap.Controller();
 // -- ouvre la connexion WebSocket
 controller.connect(); 
 
+// -- déclaration des coordonnées de notre ball 
+const ball = {
+    x    : canvas.width / 2,
+    y    : canvas.height / 2,
+    size : 100,
+};
+
 // -- on écoute le controller
 controller.on('frame', (frame) => {
     
@@ -41,9 +48,16 @@ controller.on('frame', (frame) => {
                 break;
         }
     });
-	
+    
+    // -- dessin de notre ball
+    context.fillStyle = 'cyan';
+    context.beginPath();
+    context.arc(ball.x, ball.y, 60, 0, Math.PI * 2);
+    context.fill();
+    context.closePath();  
+
 	// tableau qui parcourt chaque main
-	frame.hands.forEach( hand => {
+	frame.hands.forEach( hand => {  
         
         // -- dessin de la paume
         const palmPos = get2dCoords(hand.stabilizedPalmPosition, frame, canvas); 
@@ -68,13 +82,13 @@ controller.on('frame', (frame) => {
             context.fillRect(fingerPip.x, fingerPip.y, 5, 5);
             context.fillRect(fingerCarp.x, fingerCarp.y, 5, 5);
             context.fillRect(fingerDip.x, fingerDip.y, 5, 5);
-            
+
+            // Toujours pour cette main, on gère l'éventuel "drag" de la balle rouge
+            dragBall(hand, frame);
 
         });
         
     });
-
-    console.log(frame);
 
 });
     //console.log(`Frame event for frame ${frame.id}`);
@@ -88,7 +102,7 @@ controller.on('frame', (frame) => {
 function renderSwipe(frame, gesture){
 
     const startPosition = get2dCoords(gesture.startPosition, frame, canvas);
-    const currentPosition = get2dCoords(gesture.currentPosition, frame, canvas);
+    const currentPosition = get2dCoords(gesture.position, frame, canvas);
 
     console.log(startPosition, currentPosition);
 
@@ -136,6 +150,20 @@ function renderKeyTap(frame, gesture){
     context.fill();
     context.closePath();
 
+}
+
+/**
+ * 
+ * @param {*} hand Objet hand qui correspond à nos mains détéctées 
+ * @param {*} frame Objet "frame" transmit par le Leap Motion
+ */
+
+function dragBall(hand, frame) {
+    if (hand.grabStrength === 1) {
+        const palmPosition = get2dCoords(hand.stabilizedPalmPosition, frame, canvas);
+        ball.x = palmPosition.x;
+        ball.y = palmPosition.y;
+    }
 }
 
 /**
