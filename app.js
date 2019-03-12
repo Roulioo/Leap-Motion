@@ -4,13 +4,9 @@ const canvas = document.querySelector('canvas');
 // -- création de notre context 
 const context = canvas.getContext('2d');
 
-/*
-
-// -- taille du canvas 
+// -- dimension du canvas 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-
-*/
 
 // -- debut de l'application
 const controller = new Leap.Controller();
@@ -20,17 +16,41 @@ controller.connect();
 
 // -- on écoute le controller
 controller.on('frame', (frame) => {
-	
-	// -- efface le canvas à chaque frame
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Efface le canvas
+    context.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // -- efface le canvas à chaque frame
+    //context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Détection des gestures
+    //console.log('gestures', frame.gestures);
+
+    // -- va gérer tout ce qui est mouvement sur l'écran
+    frame.gestures.forEach( gesture => {
+        switch (gesture.type){
+            case 'swipe' : 
+                renderSwipe(frame, gesture);
+                break;
+            case 'circle' : 
+                renderCircle(frame, gesture);
+                break;
+            case 'keyTap' : 
+                renderKeyTap(frame, gesture);
+                break;
+        }
+    });
 	
 	// tableau qui parcourt chaque main
 	frame.hands.forEach( hand => {
-
+        
         // -- dessin de la paume
-        const palmPos = get2dCoords(hand.palmPosition, frame, canvas);
+        const palmPos = get2dCoords(hand.stabilizedPalmPosition, frame, canvas); 
+        context.fillStyle = 'white';
+        // -- stabilizedPalmPosition ou juste palmPosition
         context.fillRect(palmPos.x, palmPos.y, 15, 15);
-            
+
         hand.fingers.forEach( finger => {
 
             // -- conversion des coordonnées du doigt de 3D vers 2D
@@ -40,25 +60,90 @@ controller.on('frame', (frame) => {
             const fingerCarp = get2dCoords(finger.dipPosition, frame, canvas); // -- intermediate phalange
             const fingerDip = get2dCoords(finger.carpPosition, frame, canvas); // -- carpal 
 
+            context.fillStyle = 'blue'; // -- on définit notre couleur 
+
             // -- dessin d'un carré de 5 * 5 à la position 
             context.fillRect(fingerTipPos.x, fingerTipPos.y, 5, 5); // -- on définit la position et la taille 
-            context.fillStyle = 'red'; // -- on définit notre couleur 
             context.fillRect(fingerMcp.x, fingerMcp.y, 5, 5);
-            context.fillStyle = 'blue';
             context.fillRect(fingerPip.x, fingerPip.y, 5, 5);
-            context.fillStyle = 'green';
             context.fillRect(fingerCarp.x, fingerCarp.y, 5, 5);
-            context.fillStyle = 'pink';
             context.fillRect(fingerDip.x, fingerDip.y, 5, 5);
-            context.fillStyle = 'yellow';
+            
 
         });
         
     });
-    
-    //console.log(`Frame event for frame ${frame.id}`);
+
+    console.log(frame);
 
 });
+    //console.log(`Frame event for frame ${frame.id}`);
+
+/**
+ * Dessine un "swipe" à l'écran
+ * @param {Object} frame Objet "frame" transmit par le Leap Motion
+ * @param {Object} gesture Objet "gesture" de type "swipe" qui a été détecté dans cette frame
+ */
+
+function renderSwipe(frame, gesture){
+
+    const startPosition = get2dCoords(gesture.startPosition, frame, canvas);
+    const currentPosition = get2dCoords(gesture.currentPosition, frame, canvas);
+
+    console.log(startPosition, currentPosition);
+
+    context.strokeStyle = 'white';
+    context.beginPath();
+    context.moveTo(startPosition.x, startPosition.y);
+    context.lineTo(currentPosition.x, currentPosition.y);
+    context.stroke();
+    context.closePath();
+}
+
+/**
+ * Dessine un gesture "circle" à l'écran
+ * @param {Object} frame Objet "frame" transmit par le Leap Motion
+ * @param {Object} gesture Objet "gesture" de type "circle" à dessiner
+ */
+
+function renderCircle(frame, gesture){
+
+    const centerPosition = get2dCoords(gesture.center, frame, canvas);
+    const radius = gesture.radius;
+
+    context.strokeStyle = 'pink';
+    context.lineWidth = 3;
+    context.beginPath();
+    context.arc(centerPosition.x, centerPosition.y, radius, 0, Math.PI * 2);
+    context.stroke();
+    context.closePath();
+
+}
+
+/**
+ * Dessine un "cercle remplit" à l'écran
+ * @param {Object} frame Objet "frame" transmit par le Leap Motion
+ * @param {Object} gesture Objet "gesture" de type "swipe" qui a été détecté dans cette frame
+ */
+
+function renderKeyTap(frame, gesture){
+
+    const tapPosition = get2dCoords(gesture.position, frame, canvas);
+
+    context.fillStyle = 'red';
+    context.beginPath();
+    context.arc(tapPosition.x, tapPosition.y, 30, 0, Math.PI * 2);
+    context.fill();
+    context.closePath();
+
+}
+
+/**
+ * Transforme les coordonnées 3D récupérée par le Leap en coordonnées 2D pour un <canvas> web
+ * @param {Array} leapPosition Tableau de coordonnées 3d [x, y, z]
+ * @param {Object} frame Objet "frame" transmit par le Leap Motion
+ * @param {HTMLCanvasElement} canvas Objet canvas sur lequel sont dessinés les éléments
+ */
 
 function get2dCoords(leapPosition, frame, canvas){
 
@@ -67,7 +152,7 @@ function get2dCoords(leapPosition, frame, canvas){
 
     return {
         x : normalizedPoint[0] * canvas.width,
-        y : (1 - normalizedPoint[1]) * canvas.height
+        y : (1 - normalizedPoint[1]) * canvas.height,
     }
 
 }
