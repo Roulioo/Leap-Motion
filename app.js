@@ -21,6 +21,9 @@ const ball = {
     size : 100,
 };
 
+//console.log("Ball X : ",ball.x);
+//console.log("Ball Y : ",ball.y);
+
 // -- on écoute le controller
 controller.on('frame', (frame) => {
     
@@ -47,6 +50,8 @@ controller.on('frame', (frame) => {
                 renderKeyTap(frame, gesture);
                 break;
         }
+        // -- affichage des gestures 
+        console.log(frame.gestures)
     });
     
     // -- dessin de notre ball
@@ -64,6 +69,9 @@ controller.on('frame', (frame) => {
         context.fillStyle = 'white';
         // -- stabilizedPalmPosition ou juste palmPosition
         context.fillRect(palmPos.x, palmPos.y, 15, 15);
+        //console.log("PALM X : ",palmPos.x);
+        //console.log("PALM Y : ",palmPos.y);
+
 
         hand.fingers.forEach( finger => {
 
@@ -104,7 +112,7 @@ function renderSwipe(frame, gesture){
     const startPosition = get2dCoords(gesture.startPosition, frame, canvas);
     const currentPosition = get2dCoords(gesture.position, frame, canvas);
 
-    console.log(startPosition, currentPosition);
+    //console.log(startPosition, currentPosition);
 
     context.strokeStyle = 'white';
     context.beginPath();
@@ -159,10 +167,14 @@ function renderKeyTap(frame, gesture){
  */
 
 function dragBall(hand, frame) {
-    if (hand.grabStrength === 1) {
+    if (hand.grabStrength === 1){
         const palmPosition = get2dCoords(hand.stabilizedPalmPosition, frame, canvas);
-        ball.x = palmPosition.x;
-        ball.y = palmPosition.y;
+        if((palmPosition.x >= ball.x - 40 && palmPosition.x <= ball.x + 40) 
+        && 
+        (palmPosition.y >= ball.y - 50 && palmPosition.y <= ball.y + 50)){
+            ball.x = palmPosition.x;
+            ball.y = palmPosition.y;
+        }
     }
 }
 
