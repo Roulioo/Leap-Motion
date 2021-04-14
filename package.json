@@ -14,7 +14,7 @@
     "http-proxy": "^1.18.1",
     "leapjs": "^0.6.4",
     "minimist": "^1.2.5",
-    "qs": "^2.3.3",
+    "qs": "^6.0.4",
     "ws": "^0.4.25"
   },
   "devDependencies": {
